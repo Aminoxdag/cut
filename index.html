@@ -1629,18 +1629,18 @@ function pickRandomRanges(dur, count = 5, totalSec = 60) {
   const maxStart = Math.max(0, dur - segLen);
   const starts = [];
   for (let i = 0; i < count; i++) {
-    let best = Math.random() * maxStart;
-    for (let tries = 0; tries < 20; tries++) {
-      const cand = Math.random() * maxStart;
-      if (starts.every(s => Math.abs(cand - s) >= segLen * 0.85)) {
-        best = cand;
-        break;
-      }
-    }
-    starts.push(best);
-  }
-  starts.sort((a, b) => a - b);
-  return starts.map(s => [s, Math.min(dur, s + segLen)]);
+function pickRandomRanges(dur) {
+  const segLen = Math.min(60, dur);
+  const bands = [[0, 0.20], [0.30, 0.45], [0.45, 0.60], [0.60, 0.80], [0.80, 0.95]];
+  const maxStart = Math.max(0, Math.floor(dur - segLen));
+  return bands.map(([p1, p2]) => {
+    let min = Math.round(dur * p1);
+    let max = Math.round(dur * p2);
+    if (max > maxStart) max = maxStart;
+    if (min > max) min = max;
+    const start = min + Math.floor(Math.random() * (max - min + 1));
+    return [start, Math.min(dur, start + segLen)];
+  });
 }
 
 function downloadFileObj(f) {
@@ -1699,8 +1699,8 @@ async function clipRandomStart() {
     showNotification('شغّل الفيديو أولاً');
     return;
   }
-  if (dur < 10) {
-    showNotification('مدة الفيديو قصيرة جداً للقص العشوائي');
+  if (dur < 60) {
+    showNotification('مدة الفيديو أقل من دقيقة واحدة');
     return;
   }
   const src = localFile || (/^https?:/.test(video.currentSrc) ? video.currentSrc : null);
@@ -1708,24 +1708,23 @@ async function clipRandomStart() {
     showNotification('لا يوجد مصدر قابل للقص');
     return;
   }
-  const ranges = pickRandomRanges(dur, 5, 60);
+  const ranges = pickRandomRanges(dur);
   clipBusy = true;
   clipFile = null;
   randomFiles = [];
-  cutCaption.textContent = 'جارٍ تجهيز 5 لقطات عشوائية…';
+  cutCaption.textContent = 'جارٍ تجهيز 5 لقطات (60ث لكل لقطة)…';
   const stopGlow = startCutGlow();
   try {
-    const stamp = Date.now();
     for (let i = 0; i < ranges.length; i++) {
       const [s, e] = ranges[i];
       const blob = await mp4Cut(src, s, e, (t, p) => {
         cutCaption.textContent = `لقطة ${i + 1}/5: ${t} ${p}%`;
       });
-      const file = new File([blob], `random_${i + 1}_${stamp}.mp4`, { type: 'video/mp4' });
+      const file = new File([blob], `Clip_${i + 1}_60s.mp4`, { type: 'video/mp4' });
       randomFiles.push({ file, start: s, end: e });
     }
     renderRandomList();
-    clipUI(true, 'تم قص 5 لقطات عشوائية — اختر للحفظ في الألبوم أو التنزيل:', true);
+    clipUI(true, 'تم قص 5 لقطات (60 ثانية لكل لقطة) — اختر للحفظ أو التنزيل:', true);
   } catch (e) {
     cbar.classList.remove('open');
     showNotification(CLIP_ERR[e.message] || 'تعذّر القص العشوائي');
@@ -1779,3 +1778,4 @@ function clipDownload() {
 </script>
 </body>
 </html>
+
