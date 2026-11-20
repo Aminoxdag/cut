@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#090a0f">
+<title>قص الفيديو</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#090a0f;
+  --panel:#131620;
+  --panel2:#1b1f2e;
+  --line:rgba(255,255,255,.12);
+  --txt:#f8fafc;
+  --muted:#94a3b8;
+  --acc:#e2e8f0;
+  --acc-txt:#090a0f;
+  --t:env(safe-area-inset-top,0px);
+  --r:env(safe-area-inset-right,0px);
+  --b:env(safe-area-inset-bottom,0px);
+  --l:env(safe-area-inset-left,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  margin:0;
+  height:100%;
+  height:100dvh;
+  overflow:hidden;
+  background:var(--bg);
+  color:var(--txt);
+  font-family:'Tajawal',system-ui,sans-serif;
+}
+button,input{font-family:inherit;color:inherit}
+button{border:0;padding:0;background:none;cursor:pointer}
+.hidden{display:none!important}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+
+/* الحاوية الرئيسية للمشغل */
+#playerContainer{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  height:100dvh;
+  overflow:hidden;
+  background:#050609;
+}
+#mainVideo{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+  background:#050609;
+}
+
+/* شاشة البداية البسيطة */
+#emptyState{
+  position:absolute;
+  z-index:20;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:min(90vw,420px);
+  padding:32px 24px;
+  border-radius:28px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+}
+.has-video #emptyState{opacity:0;visibility:hidden;pointer-events:none}
+#emptyState .ic{width:54px;height:54px;color:var(--txt)}
+#emptyState b{font-size:22px;font-weight:800}
+#emptyState span{font-size:15px;color:var(--muted);line-height:1.6}
+
+/* طبقة الواجهة */
+#ui{
+  position:absolute;
+  inset:0;
+  z-index:40;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  pointer-events:none;
+  padding:calc(var(--t) + 12px) calc(var(--r) + 12px) calc(var(--b) + 12px) calc(var(--l) + 12px);
+}
+#ui > *{pointer-events:auto}
+
+/* الشريط العلوي */
+.topbar{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+  background:rgba(19,22,32,.92);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:10px 12px;
+}
+.url-input{
+  flex:1;
+  min-width:160px;
+  height:46px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:0 14px;
+  font-size:16px;
+  outline:none;
+}
+.url-input::placeholder{color:var(--muted)}
+.btn-sec{
+  height:46px;
+  padding:0 16px;
+  border-radius:14px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  font-size:15px;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  white-space:nowrap;
+}
+.btn-sec:active{transform:scale(.97)}
+.btn-pri{
+  height:46px;
+  padding:0 20px;
+  border-radius:14px;
+  background:var(--acc);
+  color:var(--acc-txt);
+  font-size:16px;
+  font-weight:800;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  white-space:nowrap;
+}
+.btn-pri:active{transform:scale(.97)}
+
+/* شريط التحديد والقص السفلي */
+.bottom{
+  width:100%;
+  max-width:960px;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* شريط تحديد A-B وقص وحفظ */
+.abbar{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:10px;
+  padding:12px 14px;
+  border-radius:22px;
+  background:rgba(19,22,32,.95);
+  border:1px solid var(--line);
+}
+.abbar.open{display:flex}
+.ab-btn{
+  height:48px;
+  padding:0 18px;
+  border-radius:15px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  font-size:16px;
+  font-weight:800;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.ab-btn b{
+  font-family:monospace;
+  font-size:15px;
+  direction:ltr;
+  color:#e2e8f0;
+}
+.cut-btn{
+  height:48px;
+  padding:0 22px;
+  border-radius:15px;
+  background:#ffffff;
+  color:#090a0f;
+  font-size:16px;
+  font-weight:800;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.cut-btn:active{transform:scale(.97)}
+.x-btn{
+  width:44px;
+  height:44px;
+  border-radius:14px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  display:grid;
+  place-items:center;
+}
+.cmsg{
+  min-width:190px;
+  height:48px;
+  padding:0 18px;
+  border-radius:15px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  font-size:15px;
+  font-weight:800;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* لوحة التحكم السفلية */
+.dock{
+  background:rgba(19,22,32,.94);
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:12px 16px 14px;
+}
+.times{
+  display:flex;
+  justify-content:space-between;
+  direction:ltr;
+  font-size:15px;
+  font-weight:700;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+  margin-bottom:4px;
+}
+.seek-container{
+  position:relative;
+  height:40px;
+  display:flex;
+  align-items:center;
+  direction:ltr;
+  cursor:pointer;
+  touch-action:none;
+}
+.seek-bar{
+  position:relative;
+  width:100%;
+  height:8px;
+  border-radius:99px;
+  background:rgba(255,255,255,.16);
+}
+#progFill{
+  position:absolute;
+  left:0;
+  top:0;
+  width:0;
+  height:100%;
+  border-radius:99px;
+  background:#ffffff;
+}
+#progFill::after{
+  content:"";
+  position:absolute;
+  right:-11px;
+  top:50%;
+  width:22px;
+  height:22px;
+  margin-top:-11px;
+  border-radius:50%;
+  background:#ffffff;
+  box-shadow:0 2px 8px rgba(0,0,0,.6);
+}
+#abSeg{
+  position:absolute;
+  top:-5px;
+  height:18px;
+  border-radius:6px;
+  background:rgba(255,255,255,.28);
+  border-left:3px solid #ffffff;
+  border-right:3px solid #ffffff;
+  display:none;
+  pointer-events:none;
+}
+
+.ctrl-row{
+  direction:ltr;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:6px;
+  flex-wrap:wrap;
+}
+.grp{display:flex;align-items:center;gap:8px}
+.ctrl-btn{
+  width:48px;
+  height:48px;
+  border-radius:16px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  display:grid;
+  place-items:center;
+}
+.ctrl-btn:active{transform:scale(.95)}
+.play-main{
+  width:58px;
+  height:58px;
+  border-radius:18px;
+  background:#ffffff;
+  color:#090a0f;
+  display:grid;
+  place-items:center;
+}
+.play-main .ic{width:26px;height:26px}
+
+/* إشعار التنبيه */
+#toastNotification{
+  position:fixed;
+  top:calc(var(--t) + 78px);
+  left:50%;
+  transform:translateX(-50%);
+  z-index:200;
+  max-width:92vw;
+  padding:12px 20px;
+  border-radius:16px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  font-size:15px;
+  font-weight:700;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .25s;
+}
+
+/* طبقة التوهج والأنيميشن مع Canvas أثناء القص */
+#cutStage{
+  position:fixed;
+  inset:0;
+  z-index:300;
+  background:#050609;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .25s ease,visibility .25s ease;
+}
+#cutStage.active{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+.cut-glow-1{
+  position:absolute;
+  width:min(85vw,560px);
+  height:min(85vw,560px);
+  border-radius:50%;
+  background:radial-gradient(circle,var(--gc1,rgba(226,232,240,.32)) 0%,rgba(5,6,9,0) 70%);
+  filter:blur(48px);
+  animation:glowPulse 2.4s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+.cut-glow-2{
+  position:absolute;
+  width:min(70vw,420px);
+  height:min(70vw,420px);
+  border-radius:50%;
+  background:radial-gradient(circle,var(--gc2,rgba(148,163,184,.24)) 0%,rgba(5,6,9,0) 72%);
+  filter:blur(36px);
+  animation:glowDrift 3.2s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+@keyframes glowPulse{
+  0%{transform:scale(.92);opacity:.75}
+  100%{transform:scale(1.12);opacity:1}
+}
+@keyframes glowDrift{
+  0%{transform:translate(-18px,10px) scale(.95)}
+  100%{transform:translate(18px,-12px) scale(1.08)}
+}
+#cutGlowBox{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:min(90vw,560px);
+  max-height:54dvh;
+  animation:glowFloat 3.6s ease-in-out infinite;
+}
+@keyframes glowFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-8px)}
+}
+#cutPreviewCanvas{
+  display:block;
+  max-width:100%;
+  max-height:54dvh;
+  width:auto;
+  height:auto;
+  border-radius:22px;
+  background:#090a0f;
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 20px 55px rgba(0,0,0,.85);
+}
+#cutGlowCaption{
+  position:relative;
+  z-index:3;
+  margin-top:18px;
+  padding:12px 24px;
+  border-radius:18px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  font-size:17px;
+  font-weight:800;
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 15V4"/><path d="m7.5 8.5 4.5-4.5 4.5 4.5"/><path d="M4 15v2.5A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5V15"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.7v12.6a1 1 0 0 0 1.5.86l10.3-6.3a1 1 0 0 0 0-1.72L9.5 4.84A1 1 0 0 0 8 5.7Z" fill="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.2" y="4.8" width="4" height="14.4" rx="1.5" fill="currentColor" stroke="none"/><rect x="13.8" y="4.8" width="4" height="14.4" rx="1.5" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-cw" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-ab" viewBox="0 0 24 24"><path d="M6.5 5v14M17.5 5v14"/><path d="M6.5 12h11"/><path d="m14.5 9 3 3-3 3"/></symbol>
+  <symbol id="i-cut" viewBox="0 0 24 24"><circle cx="6" cy="6.5" r="2.6"/><circle cx="6" cy="17.5" r="2.6"/><path d="M8.2 8l11.3 9.5M8.2 16 19.5 6.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="4.5"/><path d="M10 9.2v5.6a.5.5 0 0 0 .77.42l4.3-2.8a.5.5 0 0 0 0-.84l-4.3-2.8a.5.5 0 0 0-.77.42Z" fill="currentColor" stroke-width="1.2"/></symbol>
+</defs></svg>
+
+<div id="playerContainer">
+  <video id="mainVideo" playsinline webkit-playsinline preload="auto"></video>
+
+  <div id="emptyState">
+    <svg class="ic"><use href="#i-tv"/></svg>
+    <b>قص الفيديو</b>
+    <span>اختر ملف فيديو من جهازك أو الصق رابطاً مباشراً لتحديد مقطع وقصه وحفظه</span>
+    <label class="btn-pri" style="margin-top:6px">
+      <input type="file" id="emptyFileInput" accept="video/*" style="display:none" onchange="loadLocalVideo(this)">
+      <svg class="ic"><use href="#i-up"/></svg>
+      <span>اختيار فيديو</span>
+    </label>
+  </div>
+
+  <div id="ui">
+    <div class="topbar">
+      <label class="btn-sec" title="اختيار فيديو من الجهاز">
+        <input type="file" id="localVideoFile" accept="video/*" style="display:none" onchange="loadLocalVideo(this)">
+        <svg class="ic"><use href="#i-up"/></svg>
+        <span>ملف</span>
+      </label>
+      <input type="text" id="videoUrl" class="url-input" placeholder="الصق رابط الفيديو هنا..." autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+      <button class="btn-pri" onclick="updateSource()">تشغيل</button>
+      <button class="btn-sec" id="abToggle" onclick="abToggle()" title="تحديد وقص مقطع">
+        <svg class="ic"><use href="#i-ab"/></svg>
+        <span>تحديد المقطع</span>
+      </button>
+    </div>
+
+    <div class="bottom">
+      <div class="abbar" id="abBar">
+        <button class="ab-btn" onclick="abSet('a')">البداية <b id="abAt">--:--</b></button>
+        <button class="ab-btn" onclick="abSet('b')">النهاية <b id="abBt">--:--</b></button>
+        <button class="cut-btn" onclick="clipStart()">
+          <svg class="ic"><use href="#i-cut"/></svg>
+          <span>قص وحفظ</span>
+        </button>
+        <button class="x-btn" onclick="abClear()" title="مسح التحديد">
+          <svg class="ic"><use href="#i-x"/></svg>
+        </button>
+      </div>
+
+      <div class="abbar" id="clipBar">
+        <span id="clipMsg" class="cmsg"></span>
+        <button id="clipSave" class="cut-btn hidden" onclick="clipShare()">
+          <span id="clipSaveTxt">حفظ في الألبوم</span>
+        </button>
+        <button class="x-btn" onclick="clipClose()" title="إغلاق">
+          <svg class="ic"><use href="#i-x"/></svg>
+        </button>
+      </div>
+
+      <div class="dock">
+        <div class="times">
+          <span id="currentTime">00:00</span>
+          <span id="durationTime">00:00</span>
+        </div>
+        <div class="seek-container" id="seekWrapper">
+          <div class="seek-bar">
+            <div id="progFill"></div>
+            <div id="abSeg"></div>
+          </div>
+        </div>
+        <div class="ctrl-row">
+          <div class="grp">
+            <button class="ctrl-btn" onclick="skip(-10)" title="رجوع 10 ثوانٍ">
+              <svg class="ic"><use href="#i-ccw"/></svg>
+            </button>
+            <button id="playBtnSmall" class="play-main" onclick="togglePlay()" title="تشغيل / إيقاف">
+              <svg class="ic"><use href="#i-play"/></svg>
+            </button>
+            <button class="ctrl-btn" onclick="skip(10)" title="تقديم 10 ثوانٍ">
+              <svg class="ic"><use href="#i-cw"/></svg>
+            </button>
+          </div>
+          <div class="grp">
+            <button class="btn-sec" onclick="abSet('a')">تحديد البداية</button>
+            <button class="btn-sec" onclick="abSet('b')">تحديد النهاية</button>
+            <button class="btn-sec" onclick="clipRandomStart()" title="قص 5 لقطات عشوائية بمجموع دقيقة">
+              <svg class="ic"><use href="#i-cut"/></svg>
+              <span>عشوائي 1د</span>
+            </button>
+            <button class="btn-pri" onclick="clipStart()">
+              <svg class="ic"><use href="#i-cut"/></svg>
+              <span>قص</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- شاشة التوهج والأنيميشن مع Canvas أثناء القص -->
+<div id="cutStage" aria-hidden="true">
+  <div id="cutGlowLayer1" class="cut-glow-1"></div>
+  <div id="cutGlowLayer2" class="cut-glow-2"></div>
+  <div id="cutGlowBox">
+    <canvas id="cutPreviewCanvas"></canvas>
+  </div>
+  <div id="cutGlowCaption">جارٍ القص…</div>
+</div>
+
+<div id="toastNotification"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const ico = (el, n) => { const u = el.querySelector('use'); if (u) u.setAttribute('href', '#i-' + n); };
+
+const video = $('mainVideo');
+const box = $('playerContainer');
+const progFill = $('progFill');
+const seekWrapper = $('seekWrapper');
+const urlInput = $('videoUrl');
+const toast = $('toastNotification');
+
+let localFile = null;
+let currentObjectURL = null;
+let dragging = false;
+let dragPos = 0;
+let toastTimer = null;
+let triedNoCors = false;
+
+function showNotification(m) {
+  toast.textContent = m;
+  toast.style.opacity = 1;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.style.opacity = 0; }, 3500);
+}
+
+const formatTime = s => {
+  if (!isFinite(s) || s < 0) return '00:00';
+  const m = Math.floor(s / 60);
+  const c = Math.floor(s % 60);
+  return (m < 10 ? '0' + m : m) + ':' + (c < 10 ? '0' + c : c);
+};
+
+function togglePlay() {
+  if (video.paused) video.play().catch(() => {});
+  else video.pause();
+}
+function skip(v) {
+  if (!video.duration) return;
+  video.currentTime = clamp(video.currentTime + v, 0, video.duration);
+}
+
+function loadLocalVideo(inp) {
+  if (!inp.files || !inp.files[0]) return;
+  const f = inp.files[0];
+  localFile = f;
+  if (currentObjectURL) URL.revokeObjectURL(currentObjectURL);
+  currentObjectURL = URL.createObjectURL(f);
+  video.removeAttribute('crossorigin');
+  video.src = currentObjectURL;
+  video.preload = 'auto';
+  video.load();
+  urlInput.value = 'ملف محلي: ' + f.name;
+  video.play().then(() => showNotification('تم تحميل الفيديو')).catch(() => {});
+}
+
+function updateSource() {
+  const u = urlInput.value.trim();
+  if (!u || u.startsWith('ملف محلي:')) return;
+  localFile = null;
+  triedNoCors = false;
+  video.crossOrigin = 'anonymous';
+  video.src = u;
+  video.load();
+  video.play().catch(() => {});
+}
+
+urlInput.addEventListener('keypress', e => {
+  if (e.key === 'Enter') {
+    updateSource();
+    urlInput.blur();
+  }
+});
+
+video.addEventListener('error', () => {
+  const s = video.getAttribute('src');
+  if (!s) return;
+  if (video.crossOrigin && !triedNoCors && !s.startsWith('blob:')) {
+    triedNoCors = true;
+    video.removeAttribute('crossorigin');
+    video.src = s;
+    video.load();
+    video.play().catch(() => {});
+    return;
+  }
+  box.classList.remove('has-video');
+  showNotification('تعذّر تشغيل الفيديو. تحقق من الرابط أو الملف.');
+});
+
+video.addEventListener('loadeddata', () => box.classList.add('has-video'));
+video.addEventListener('emptied', () => box.classList.remove('has-video'));
+video.addEventListener('play', () => ico($('playBtnSmall'), 'pause'));
+video.addEventListener('pause', () => ico($('playBtnSmall'), 'play'));
+
+/* شريط التقدم */
+const seekRatio = e => {
+  const r = seekWrapper.firstElementChild.getBoundingClientRect();
+  return clamp((e.clientX - r.left) / r.width, 0, 1);
+};
+function setSeekUI(p) {
+  progFill.style.width = (p * 100) + '%';
+  if (video.duration) $('currentTime').textContent = formatTime(p * video.duration);
+}
+seekWrapper.addEventListener('pointerdown', e => {
+  if (!video.duration) return;
+  dragging = true;
+  dragPos = seekRatio(e);
+  seekWrapper.setPointerCapture(e.pointerId);
+  setSeekUI(dragPos);
+});
+seekWrapper.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  dragPos = seekRatio(e);
+  setSeekUI(dragPos);
+});
+const endDrag = commit => {
+  if (!dragging) return;
+  dragging = false;
+  if (commit && video.duration) video.currentTime = dragPos * video.duration;
+};
+seekWrapper.addEventListener('pointerup', () => endDrag(true));
+seekWrapper.addEventListener('pointercancel', () => endDrag(false));
+
+video.addEventListener('timeupdate', () => {
+  const d = video.duration;
+  if (!d || !isFinite(d)) return;
+  if (!dragging) {
+    progFill.style.width = (video.currentTime / d * 100) + '%';
+    $('currentTime').textContent = formatTime(video.currentTime);
+  }
+  $('durationTime').textContent = formatTime(d);
+});
+
+/* تحديد مقطع A-B */
+let abA = null, abB = null, abRaf = 0, abSrc = '', clipBusy = false;
+const abSeg = $('abSeg');
+
+function abRender() {
+  const d = video.duration;
+  $('abAt').textContent = abA == null ? '--:--' : formatTime(abA);
+  $('abBt').textContent = abB == null ? '--:--' : formatTime(abB);
+  if (abA == null || !d || !isFinite(d)) {
+    abSeg.style.display = 'none';
+    return;
+  }
+  abSeg.style.display = 'block';
+  abSeg.style.left = (abA / d * 100) + '%';
+  abSeg.style.width = (((abB == null ? abA : abB) - abA) / d * 100) + '%';
+}
+
+function abTick() {
+  abRaf = 0;
+  if (abB == null) return;
+  if (!clipBusy && !video.paused && !video.seeking && video.currentTime >= abB - .06) {
+    video.currentTime = abA;
+  }
+  abRaf = requestAnimationFrame(abTick);
+}
+
+function abSet(w) {
+  const t = video.currentTime;
+  if (!video.duration) {
+    showNotification('شغّل الفيديو أولاً');
+    return;
+  }
+  $('abBar').classList.add('open');
+  if (w === 'a') {
+    abA = t;
+    abSrc = video.currentSrc;
+    if (abB != null && abB <= abA + .3) abB = null;
+    showNotification('بداية المقطع: ' + formatTime(t));
+  } else {
+    if (abA == null) {
+      showNotification('حدد نقطة البداية أولاً');
+      return;
+    }
+    if (t <= abA + .3) {
+      showNotification('نقطة النهاية يجب أن تكون بعد البداية');
+      return;
+    }
+    abB = t;
+    video.currentTime = abA;
+    video.play().catch(() => {});
+    showNotification('تم تحديد المقطع');
+  }
+  abRender();
+  if (abB != null && !abRaf) abRaf = requestAnimationFrame(abTick);
+}
+
+function abClear() {
+  abA = abB = null;
+  abRender();
+  showNotification('تم مسح التحديد');
+}
+
+function abToggle() {
+  $('abBar').classList.toggle('open');
+}
+
+video.addEventListener('loadstart', () => {
+  if (video.currentSrc !== abSrc) {
+    abA = abB = null;
+    abRender();
+  }
+});
+video.addEventListener('durationchange', abRender);
+
+/* توهج و Canvas أثناء القص */
+const cutStage = $('cutStage');
+const cutGlow1 = $('cutGlowLayer1');
+const cutGlow2 = $('cutGlowLayer2');
+const cutCaption = $('cutGlowCaption');
+const cutPreviewCanvas = $('cutPreviewCanvas');
+let cutGlowActive = false;
+let cutGlowRaf = 0;
+
+function startCutGlow() {
+  if (cutGlowActive) return () => {};
+  cutGlowActive = true;
+  cutStage.classList.add('active');
+
+  const vw = video.videoWidth || 1280;
+  const vh = video.videoHeight || 720;
+  cutPreviewCanvas.width = Math.min(vw, 640);
+  cutPreviewCanvas.height = Math.max(1, Math.round(cutPreviewCanvas.width * (vh / vw)));
+  const ctx = cutPreviewCanvas.getContext('2d');
+
+  const sampleCanvas = document.createElement('canvas');
+  sampleCanvas.width = 64;
+  sampleCanvas.height = 36;
+  const sctx = sampleCanvas.getContext('2d');
+
+  const wasPaused = video.paused;
+  const wasMuted = video.muted;
+  video.muted = true;
+  if (abA != null) video.currentTime = abA;
+  video.play().catch(() => {});
+
+  let lastGlowTime = 0;
+  const tick = now => {
+    if (!cutGlowActive) return;
+    if (abB != null && video.currentTime >= abB) {
+      video.currentTime = abA || 0;
+    }
+    try {
+      ctx.drawImage(video, 0, 0, cutPreviewCanvas.width, cutPreviewCanvas.height);
+    } catch (e) {}
+
+    if (now - lastGlowTime >= 120) {
+      lastGlowTime = now;
+      try {
+        sctx.drawImage(video, 0, 0, sampleCanvas.width, sampleCanvas.height);
+        const p1 = sctx.getImageData(16, 10, 1, 1).data;
+        const p2 = sctx.getImageData(48, 10, 1, 1).data;
+        const p3 = sctx.getImageData(32, 26, 1, 1).data;
+        const r = Math.round((p1[0] + p2[0] + p3[0]) / 3);
+        const g = Math.round((p1[1] + p2[1] + p3[1]) / 3);
+        const b = Math.round((p1[2] + p2[2] + p3[2]) / 3);
+        cutGlow1.style.setProperty('--gc1', `rgba(${r},${g},${b},.68)`);
+        cutGlow2.style.setProperty('--gc2', `rgba(${p2[0]},${p2[1]},${p2[2]},.58)`);
+      } catch (e) {}
+    }
+    cutGlowRaf = requestAnimationFrame(tick);
+  };
+  cutGlowRaf = requestAnimationFrame(tick);
+
+  return () => {
+    cutGlowActive = false;
+    cancelAnimationFrame(cutGlowRaf);
+    cutStage.classList.remove('active');
+    video.muted = wasMuted;
+    if (wasPaused) video.pause();
+  };
+}
+
+/* قص المقطع المباشر بدون إعادة ترميز (MP4) */
+const mp4Cut = (() => {
+  const u32 = (d, o) => ((d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3]) >>> 0;
+  const s32 = (d, o) => (d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3];
+  const tg = (d, o) => String.fromCharCode(d[o], d[o + 1], d[o + 2], d[o + 3]);
+  const put = (o, q, v) => { o[q] = v >>> 24; o[q + 1] = (v >>> 16) & 255; o[q + 2] = (v >>> 8) & 255; o[q + 3] = v & 255; };
+  const words = (h, t = []) => {
+    const o = new Uint8Array((h.length + t.length) * 4);
+    let q = 0;
+    for (const v of h) { put(o, q, v); q += 4; }
+    for (const v of t) { put(o, q, v); q += 4; }
+    return o;
+  };
+  const mk = (t, ...ps) => {
+    let L = 8;
+    for (const p of ps) L += p.length;
+    const o = new Uint8Array(L);
+    put(o, 0, L);
+    for (let i = 0; i < 4; i++) o[4 + i] = t.charCodeAt(i);
+    let q = 8;
+    for (const p of ps) { o.set(p, q); q += p.length; }
+    return o;
+  };
+  const kids = (d, x) => {
+    const r = [];
+    let s = x.b;
+    while (s + 8 <= x.e) {
+      let z = u32(d, s), h = 8;
+      if (z === 1) { z = u32(d, s + 8) * 4294967296 + u32(d, s + 12); h = 16; }
+      else if (z === 0) z = x.e - s;
+      if (z < h || s + z > x.e) break;
+      r.push({ t: tg(d, s + 4), s, e: s + z, b: s + h });
+      s += z;
+    }
+    return r;
+  };
+  const kid = (d, x, t) => kids(d, x).find(k => k.t === t);
+  const raw = (d, x) => d.slice(x.s, x.e);
+  const fileRd = f => ({ size: f.size, read: async (a, b) => new Uint8Array(await f.slice(a, b).arrayBuffer()) });
+  async function urlRd(u) {
+    let size = Infinity;
+    const r = await fetch(u, { headers: { Range: 'bytes=0-0' } });
+    if (r.status !== 206) throw Error('norange');
+    const m = /\/(\d+)\s*$/.exec(r.headers.get('Content-Range') || '');
+    if (m) size = +m[1];
+    return {
+      size,
+      read: async (a, b) => {
+        const x = await fetch(u, { headers: { Range: `bytes=${a}-${b - 1}` } });
+        if (x.status !== 206) throw Error('norange');
+        return new Uint8Array(await x.arrayBuffer());
+      }
+    };
+  }
+  async function top(rd) {
+    let pos = 0, moov = null, ftyp = null;
+    while (pos < rd.size && !(moov && ftyp)) {
+      const h = await rd.read(pos, Math.min(pos + 16, rd.size));
+      if (h.length < 8) break;
+      let sz = u32(h, 0), t = tg(h, 4), hd = 8;
+      if (sz === 1) { sz = u32(h, 8) * 4294967296 + u32(h, 12); hd = 16; }
+      else if (sz === 0) sz = rd.size - pos;
+      if (sz < hd) throw Error('nomoov');
+      if (t === 'moof') throw Error('frag');
+      if (t === 'ftyp') ftyp = await rd.read(pos, pos + sz);
+      if (t === 'moov') moov = await rd.read(pos, pos + sz);
+      pos += sz;
+    }
+    if (!moov || !ftyp) throw Error('nomoov');
+    return { ftyp, moov };
+  }
+  function trak(d, tk) {
+    const mdia = kid(d, tk, 'mdia'), hd = kid(d, mdia, 'hdlr'), mdhd = kid(d, mdia, 'mdhd'), minf = kid(d, mdia, 'minf'), stbl = kid(d, minf, 'stbl'), g = t => kid(d, stbl, t), v = d[mdhd.b];
+    const t = { tk, hd, mdhd, minf, stbl, type: tg(d, hd.b + 8), ts: u32(d, mdhd.b + (v ? 20 : 12)), ver: v, dts: [], dur: [] };
+    let x = g('stts'), n = u32(d, x.b + 4), p = x.b + 8, T = 0;
+    for (let i = 0; i < n; i++, p += 8) {
+      const c = u32(d, p), l = u32(d, p + 4);
+      for (let k = 0; k < c; k++) { t.dts.push(T); t.dur.push(l); T += l; }
+    }
+    const N = t.dts.length;
+    x = g('stsz');
+    const ss = u32(d, x.b + 4);
+    t.sz = new Array(N);
+    for (let i = 0; i < N; i++) t.sz[i] = ss || u32(d, x.b + 12 + i * 4);
+    const co = [];
+    x = g('stco');
+    if (x) { const c = u32(d, x.b + 4); for (let i = 0; i < c; i++) co.push(u32(d, x.b + 8 + i * 4)); }
+    else { x = g('co64'); const c = u32(d, x.b + 4); for (let i = 0; i < c; i++) co.push(u32(d, x.b + 8 + i * 8) * 4294967296 + u32(d, x.b + 12 + i * 8)); }
+    x = g('stsc');
+    const sc = [], cn = u32(d, x.b + 4);
+    for (let i = 0; i < cn; i++) sc.push([u32(d, x.b + 8 + i * 12), u32(d, x.b + 12 + i * 12)]);
+    t.off = new Array(N);
+    let si = 0, ei = 0;
+    for (let c = 0; c < co.length && si < N; c++) {
+      while (ei + 1 < sc.length && sc[ei + 1][0] <= c + 1) ei++;
+      let o = co[c];
+      for (let k = 0; k < sc[ei][1] && si < N; k++) { t.off[si] = o; o += t.sz[si++]; }
+    }
+    t.cto = new Array(N).fill(0);
+    x = g('ctts');
+    t.cv = 0;
+    t.hasCtts = !!x;
+    if (x) {
+      t.cv = d[x.b];
+      const c = u32(d, x.b + 4);
+      let q = 0, pp = x.b + 8;
+      for (let i = 0; i < c; i++, pp += 8) {
+        const k = u32(d, pp), o = s32(d, pp + 4);
+        for (let j = 0; j < k && q < N; j++) t.cto[q++] = o;
+      }
+    }
+    t.sync = null;
+    x = g('stss');
+    if (x) {
+      t.sync = new Set();
+      const c = u32(d, x.b + 4);
+      for (let i = 0; i < c; i++) t.sync.add(u32(d, x.b + 8 + i * 4) - 1);
+    }
+    return t;
+  }
+  function pick(t, A, B, near) {
+    const a = A * t.ts, b = B * t.ts, N = t.dts.length;
+    let s = 0;
+    for (let i = 0; i < N && t.dts[i] <= a; i++) if (!t.sync || t.sync.has(i)) s = i;
+    if (near) {
+      let n = -1;
+      for (let i = s + 1; i < N; i++) if (t.dts[i] > a && (!t.sync || t.sync.has(i))) { n = i; break; }
+      if (n > 0 && t.dts[n] < b && t.dts[n] - a < a - t.dts[s]) s = n;
+    }
+    let e = N;
+    for (let i = s; i < N; i++) if (t.dts[i] >= b) { e = i; break; }
+    let mp = 1e18;
+    for (let i = s; i < Math.min(e, s + 32); i++) mp = Math.min(mp, t.dts[i] - t.dts[s] + t.cto[i]);
+    return { s, e, mt: near ? (mp < 1e18 ? mp : 0) : Math.max(Math.round(a - t.dts[s]), 0) };
+  }
+  const rle = a => {
+    const r = [];
+    for (const v of a) {
+      const l = r[r.length - 1];
+      if (l && l[1] === v) l[0]++;
+      else r.push([1, v]);
+    }
+    return r;
+  };
+  function build(d, t, sel, A, B, mts, off) {
+    const { s, e, mt } = sel, n = e - s;
+    const st = rle(t.dur.slice(s, e)), parts = [raw(d, kid(d, t.stbl, 'stsd')), mk('stts', words([0, st.length], st.flat()))];
+    if (t.hasCtts) { const r = rle(t.cto.slice(s, e)); parts.push(mk('ctts', words([t.cv * 16777216, r.length], r.flat()))); }
+    if (t.sync) { const ix = []; for (let i = s; i < e; i++) if (t.sync.has(i)) ix.push(i - s + 1); parts.push(mk('stss', words([0, ix.length], ix))); }
+    parts.push(mk('stsc', words([0, 1, 1, n, 1])), mk('stsz', words([0, 0, n], t.sz.slice(s, e))), mk('stco', words([0, 1, off])));
+    const minf = mk('minf', ...kids(d, t.minf).filter(k => k.t !== 'stbl').map(k => raw(d, k)), mk('stbl', ...parts));
+    let md = 0;
+    for (let i = s; i < e; i++) md += t.dur[i];
+    const mh = raw(d, t.mdhd);
+    if (t.ver) { put(mh, 32, 0); put(mh, 36, md); } else put(mh, 24, md);
+    const tkx = kid(d, t.tk, 'tkhd'), tkh = raw(d, tkx), sd = Math.round((B - A) * mts);
+    if (d[tkx.b]) put(tkh, 40, sd); else put(tkh, 28, sd);
+    return mk('trak', tkh, mk('edts', mk('elst', words([0, 1, sd, mt, 65536]))), mk('mdia', mh, raw(d, t.hd), minf));
+  }
+  return async function (src, A, B, prog) {
+    prog('قراءة بنية الملف…', 5);
+    const rd = src instanceof Blob ? fileRd(src) : await urlRd(src);
+    const { ftyp, moov } = await top(rd);
+    const root = kids(moov, { b: 0, e: moov.length })[0];
+    if (kid(moov, root, 'mvex')) throw Error('frag');
+    const mvx = kid(moov, root, 'mvhd'), mts = u32(moov, mvx.b + (moov[mvx.b] ? 20 : 12));
+    const trs = kids(moov, root).filter(k => k.t === 'trak').map(k => trak(moov, k)).filter(t => t.type === 'vide' || t.type === 'soun');
+    if (!trs.length) throw Error('nomoov');
+    const vi = trs.findIndex(t => t.type === 'vide'), sv = vi >= 0 ? pick(trs[vi], A, B, true) : null;
+    const A2 = sv ? trs[vi].dts[sv.s] / trs[vi].ts : A;
+    const sels = trs.map((t, i) => i === vi ? sv : pick(t, A2, B));
+    if (sels.some(x => x.e <= x.s)) throw Error('empty');
+    let lo = Infinity, hi = 0;
+    trs.forEach((t, i) => {
+      for (let k = sels[i].s; k < sels[i].e; k++) {
+        lo = Math.min(lo, t.off[k]);
+        hi = Math.max(hi, t.off[k] + t.sz[k]);
+      }
+    });
+    if (hi - lo > 9e8) throw Error('big');
+    prog('تحميل المقطع…', 25);
+    const buf = await rd.read(lo, hi);
+    prog('بناء الملف…', 85);
+    const datas = trs.map((t, i) => {
+      let L = 0;
+      for (let k = sels[i].s; k < sels[i].e; k++) L += t.sz[k];
+      const o = new Uint8Array(L);
+      let q = 0;
+      for (let k = sels[i].s; k < sels[i].e; k++) {
+        o.set(buf.subarray(t.off[k] - lo, t.off[k] - lo + t.sz[k]), q);
+        q += t.sz[k];
+      }
+      return o;
+    });
+    const total = datas.reduce((a, x) => a + x.length, 0);
+    const mv = raw(moov, mvx), sd = Math.round((B - A2) * mts);
+    if (moov[mvx.b]) { put(mv, 32, 0); put(mv, 36, sd); } else put(mv, 24, sd);
+    const mkMoov = offs => mk('moov', mv, ...trs.map((t, i) => build(moov, t, sels[i], A2, B, mts, offs[i])));
+    let m = mkMoov(trs.map(() => 0)), acc = ftyp.length + m.length + 8;
+    const offs = datas.map(x => { const o = acc; acc += x.length; return o; });
+    if (acc > 4294967295) throw Error('big');
+    m = mkMoov(offs);
+    const mh = new Uint8Array(8);
+    put(mh, 0, total + 8);
+    mh.set([109, 100, 97, 116], 4);
+    return new Blob([ftyp, m, mh, ...datas], { type: 'video/mp4' });
+  };
+})();
+
+const mp4CutMulti = (() => {
+  const u32 = (d, o) => ((d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3]) >>> 0;
+  const s32 = (d, o) => (d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3];
+  const tg = (d, o) => String.fromCharCode(d[o], d[o + 1], d[o + 2], d[o + 3]);
+  const put = (o, q, v) => { o[q] = v >>> 24; o[q + 1] = (v >>> 16) & 255; o[q + 2] = (v >>> 8) & 255; o[q + 3] = v & 255; };
+  const words = (h, t = []) => {
+    const o = new Uint8Array((h.length + t.length) * 4);
+    let q = 0;
+    for (const v of h) { put(o, q, v); q += 4; }
+    for (const v of t) { put(o, q, v); q += 4; }
+    return o;
+  };
+  const mk = (t, ...ps) => {
+    let L = 8;
+    for (const p of ps) L += p.length;
+    const o = new Uint8Array(L);
+    put(o, 0, L);
+    for (let i = 0; i < 4; i++) o[4 + i] = t.charCodeAt(i);
+    let q = 8;
+    for (const p of ps) { o.set(p, q); q += p.length; }
+    return o;
+  };
+  const kids = (d, x) => {
+    const r = [];
+    let s = x.b;
+    while (s + 8 <= x.e) {
+      let z = u32(d, s), h = 8;
+      if (z === 1) { z = u32(d, s + 8) * 4294967296 + u32(d, s + 12); h = 16; }
+      else if (z === 0) z = x.e - s;
+      if (z < h || s + z > x.e) break;
+      r.push({ t: tg(d, s + 4), s, e: s + z, b: s + h });
+      s += z;
+    }
+    return r;
+  };
+  const kid = (d, x, t) => kids(d, x).find(k => k.t === t);
+  const raw = (d, x) => d.slice(x.s, x.e);
+  const fileRd = f => ({ size: f.size, read: async (a, b) => new Uint8Array(await f.slice(a, b).arrayBuffer()) });
+  async function urlRd(u) {
+    let size = Infinity;
+    const r = await fetch(u, { headers: { Range: 'bytes=0-0' } });
+    if (r.status !== 206) throw Error('norange');
+    const m = /\/(\d+)\s*$/.exec(r.headers.get('Content-Range') || '');
+    if (m) size = +m[1];
+    return {
+      size,
+      read: async (a, b) => {
+        const x = await fetch(u, { headers: { Range: `bytes=${a}-${b - 1}` } });
+        if (x.status !== 206) throw Error('norange');
+        return new Uint8Array(await x.arrayBuffer());
+      }
+    };
+  }
+  async function top(rd) {
+    let pos = 0, moov = null, ftyp = null;
+    while (pos < rd.size && !(moov && ftyp)) {
+      const h = await rd.read(pos, Math.min(pos + 16, rd.size));
+      if (h.length < 8) break;
+      let sz = u32(h, 0), t = tg(h, 4), hd = 8;
+      if (sz === 1) { sz = u32(h, 8) * 4294967296 + u32(h, 12); hd = 16; }
+      else if (sz === 0) sz = rd.size - pos;
+      if (sz < hd) throw Error('nomoov');
+      if (t === 'moof') throw Error('frag');
+      if (t === 'ftyp') ftyp = await rd.read(pos, pos + sz);
+      if (t === 'moov') moov = await rd.read(pos, pos + sz);
+      pos += sz;
+    }
+    if (!moov || !ftyp) throw Error('nomoov');
+    return { ftyp, moov };
+  }
+  function trak(d, tk) {
+    const mdia = kid(d, tk, 'mdia'), hd = kid(d, mdia, 'hdlr'), mdhd = kid(d, mdia, 'mdhd'), minf = kid(d, mdia, 'minf'), stbl = kid(d, minf, 'stbl'), g = t => kid(d, stbl, t), v = d[mdhd.b];
+    const t = { tk, hd, mdhd, minf, stbl, type: tg(d, hd.b + 8), ts: u32(d, mdhd.b + (v ? 20 : 12)), ver: v, dts: [], dur: [] };
+    let x = g('stts'), n = u32(d, x.b + 4), p = x.b + 8, T = 0;
+    for (let i = 0; i < n; i++, p += 8) {
+      const c = u32(d, p), l = u32(d, p + 4);
+      for (let k = 0; k < c; k++) { t.dts.push(T); t.dur.push(l); T += l; }
+    }
+    const N = t.dts.length;
+    x = g('stsz');
+    const ss = u32(d, x.b + 4);
+    t.sz = new Array(N);
+    for (let i = 0; i < N; i++) t.sz[i] = ss || u32(d, x.b + 12 + i * 4);
+    const co = [];
+    x = g('stco');
+    if (x) { const c = u32(d, x.b + 4); for (let i = 0; i < c; i++) co.push(u32(d, x.b + 8 + i * 4)); }
+    else { x = g('co64'); const c = u32(d, x.b + 4); for (let i = 0; i < c; i++) co.push(u32(d, x.b + 8 + i * 8) * 4294967296 + u32(d, x.b + 12 + i * 8)); }
+    x = g('stsc');
+    const sc = [], cn = u32(d, x.b + 4);
+    for (let i = 0; i < cn; i++) sc.push([u32(d, x.b + 8 + i * 12), u32(d, x.b + 12 + i * 12)]);
+    t.off = new Array(N);
+    let si = 0, ei = 0;
+    for (let c = 0; c < co.length && si < N; c++) {
+      while (ei + 1 < sc.length && sc[ei + 1][0] <= c + 1) ei++;
+      let o = co[c];
+      for (let k = 0; k < sc[ei][1] && si < N; k++) { t.off[si] = o; o += t.sz[si++]; }
+    }
+    t.cto = new Array(N).fill(0);
+    x = g('ctts');
+    t.cv = 0;
+    t.hasCtts = !!x;
+    if (x) {
+      t.cv = d[x.b];
+      const c = u32(d, x.b + 4);
+      let q = 0, pp = x.b + 8;
+      for (let i = 0; i < c; i++, pp += 8) {
+        const k = u32(d, pp), o = s32(d, pp + 4);
+        for (let j = 0; j < k && q < N; j++) t.cto[q++] = o;
+      }
+    }
+    t.sync = null;
+    x = g('stss');
+    if (x) {
+      t.sync = new Set();
+      const c = u32(d, x.b + 4);
+      for (let i = 0; i < c; i++) t.sync.add(u32(d, x.b + 8 + i * 4) - 1);
+    }
+    return t;
+  }
+  function pick(t, A, B, near) {
+    const a = A * t.ts, b = B * t.ts, N = t.dts.length;
+    let s = 0;
+    for (let i = 0; i < N && t.dts[i] <= a; i++) if (!t.sync || t.sync.has(i)) s = i;
+    if (near) {
+      let n = -1;
+      for (let i = s + 1; i < N; i++) if (t.dts[i] > a && (!t.sync || t.sync.has(i))) { n = i; break; }
+      if (n > 0 && t.dts[n] < b && t.dts[n] - a < a - t.dts[s]) s = n;
+    }
+    let e = N;
+    for (let i = s; i < N; i++) if (t.dts[i] >= b) { e = i; break; }
+    let mp = 1e18;
+    for (let i = s; i < Math.min(e, s + 32); i++) mp = Math.min(mp, t.dts[i] - t.dts[s] + t.cto[i]);
+    return { s, e, mt: near ? (mp < 1e18 ? mp : 0) : Math.max(Math.round(a - t.dts[s]), 0) };
+  }
+  const rle = a => {
+    const r = [];
+    for (const v of a) {
+      const l = r[r.length - 1];
+      if (l && l[1] === v) l[0]++;
+      else r.push([1, v]);
+    }
+    return r;
+  };
+  function buildMulti(d, t, segSels, mts, off) {
+    const durArr = [], ctoArr = [], szArr = [], syncArr = [], elstArr = [];
+    let idxCounter = 0;
+    for (const sel of segSels) {
+      const { s, e, mt, A, B } = sel;
+      for (let i = s; i < e; i++) {
+        durArr.push(t.dur[i]);
+        if (t.hasCtts) ctoArr.push(t.cto[i]);
+        szArr.push(t.sz[i]);
+        if (t.sync && t.sync.has(i)) syncArr.push(idxCounter + 1);
+        idxCounter++;
+      }
+      const sd = Math.max(1, Math.round((B - A) * mts));
+      elstArr.push(sd, mt, 65536);
+    }
+    const n = szArr.length;
+    const st = rle(durArr);
+    const parts = [raw(d, kid(d, t.stbl, 'stsd')), mk('stts', words([0, st.length], st.flat()))];
+    if (t.hasCtts) {
+      const r = rle(ctoArr);
+      parts.push(mk('ctts', words([t.cv * 16777216, r.length], r.flat())));
+    }
+    if (t.sync) parts.push(mk('stss', words([0, syncArr.length], syncArr)));
+    parts.push(mk('stsc', words([0, 1, 1, n, 1])), mk('stsz', words([0, 0, n], szArr)), mk('stco', words([0, 1, off])));
+    const minf = mk('minf', ...kids(d, t.minf).filter(k => k.t !== 'stbl').map(k => raw(d, k)), mk('stbl', ...parts));
+    let md = 0;
+    for (const v of durArr) md += v;
+    const mh = raw(d, t.mdhd);
+    if (t.ver) { put(mh, 32, 0); put(mh, 36, md); } else put(mh, 24, md);
+    let totalSd = 0;
+    for (let i = 0; i < elstArr.length; i += 3) totalSd += elstArr[i];
+    const tkx = kid(d, t.tk, 'tkhd'), tkh = raw(d, tkx);
+    if (d[tkx.b]) put(tkh, 40, totalSd); else put(tkh, 28, totalSd);
+    return {
+      trak: mk('trak', tkh, mk('edts', mk('elst', words([0, segSels.length], elstArr))), mk('mdia', mh, raw(d, t.hd), minf)),
+      totalSd
+    };
+  }
+  return async function (src, ranges, prog) {
+    prog('قراءة بنية الملف…', 5);
+    const rd = src instanceof Blob ? fileRd(src) : await urlRd(src);
+    const { ftyp, moov } = await top(rd);
+    const root = kids(moov, { b: 0, e: moov.length })[0];
+    if (kid(moov, root, 'mvex')) throw Error('frag');
+    const mvx = kid(moov, root, 'mvhd'), mts = u32(moov, mvx.b + (moov[mvx.b] ? 20 : 12));
+    const trs = kids(moov, root).filter(k => k.t === 'trak').map(k => trak(moov, k)).filter(t => t.type === 'vide' || t.type === 'soun');
+    if (!trs.length) throw Error('nomoov');
+    const vi = trs.findIndex(t => t.type === 'vide');
+    const perTrackSegs = trs.map(() => []);
+    for (const [A, B] of ranges) {
+      const sv = vi >= 0 ? pick(trs[vi], A, B, true) : null;
+      const A2 = sv ? trs[vi].dts[sv.s] / trs[vi].ts : A;
+      if (B <= A2 + 0.1) continue;
+      trs.forEach((t, i) => {
+        const sel = i === vi ? sv : pick(t, A2, B);
+        if (sel.e > sel.s) perTrackSegs[i].push({ ...sel, A: A2, B });
+      });
+    }
+    if (perTrackSegs.some(list => !list.length)) throw Error('empty');
+    let totalBytes = 0;
+    trs.forEach((t, i) => {
+      for (const sel of perTrackSegs[i]) {
+        for (let k = sel.s; k < sel.e; k++) totalBytes += t.sz[k];
+      }
+    });
+    if (totalBytes > 9e8) throw Error('big');
+    const datas = [];
+    for (let i = 0; i < trs.length; i++) {
+      const t = trs[i];
+      let L = 0;
+      for (const sel of perTrackSegs[i]) for (let k = sel.s; k < sel.e; k++) L += t.sz[k];
+      const o = new Uint8Array(L);
+      let q = 0;
+      for (let j = 0; j < perTrackSegs[i].length; j++) {
+        const sel = perTrackSegs[i][j];
+        const lo = t.off[sel.s];
+        const hi = t.off[sel.e - 1] + t.sz[sel.e - 1];
+        const pct = 15 + Math.round(((i * perTrackSegs[i].length + j + 1) / (trs.length * perTrackSegs[i].length)) * 65);
+        prog(`تحميل اللقطة ${j + 1} من ${perTrackSegs[i].length}…`, pct);
+        const buf = await rd.read(lo, hi);
+        for (let k = sel.s; k < sel.e; k++) {
+          o.set(buf.subarray(t.off[k] - lo, t.off[k] - lo + t.sz[k]), q);
+          q += t.sz[k];
+        }
+      }
+      datas.push(o);
+    }
+    prog('دمج اللقطات العشوائية…', 88);
+    const total = datas.reduce((a, x) => a + x.length, 0);
+    const mv = raw(moov, mvx);
+    const mkMoov = offs => {
+      const built = trs.map((t, i) => buildMulti(moov, t, perTrackSegs[i], mts, offs[i]));
+      const sd = Math.max(...built.map(b => b.totalSd));
+      if (moov[mvx.b]) { put(mv, 32, 0); put(mv, 36, sd); } else put(mv, 24, sd);
+      return mk('moov', mv, ...built.map(b => b.trak));
+    };
+    let m = mkMoov(trs.map(() => 0)), acc = ftyp.length + m.length + 8;
+    const offs = datas.map(x => { const o = acc; acc += x.length; return o; });
+    if (acc > 4294967295) throw Error('big');
+    m = mkMoov(offs);
+    const mh = new Uint8Array(8);
+    put(mh, 0, total + 8);
+    mh.set([109, 100, 97, 116], 4);
+    return new Blob([ftyp, m, mh, ...datas], { type: 'video/mp4' });
+  };
+})();
+
+let clipFile = null;
+const cbar = $('clipBar'), cmsg = $('clipMsg'), cSave = $('clipSave');
+const CLIP_ERR = {
+  frag: 'هذا الملف مجزّأ وغير مدعوم للقص',
+  nomoov: 'تعذّر قراءة الملف — القص يدعم MP4 و MOV فقط',
+  norange: 'المصدر لا يدعم التحميل الجزئي أو يمنع الوصول — جرّب ملفاً محلياً',
+  big: 'المقطع كبير جداً للقص على هذا الجهاز',
+  empty: 'المقطع المحدد فارغ'
+};
+
+function clipUI(done, txt) {
+  cbar.classList.add('open');
+  $('abBar').classList.remove('open');
+  cmsg.textContent = txt;
+  cSave.classList.toggle('hidden', !done);
+}
+
+function clipClose() {
+  cbar.classList.remove('open');
+  clipBusy = false;
+}
+
+function pickRandomRanges(dur, count = 5, totalSec = 60) {
+  const actualTotal = Math.min(totalSec, dur * 0.9);
+  const segLen = actualTotal / count;
+  const maxStart = Math.max(0, dur - segLen);
+  const starts = [];
+  for (let i = 0; i < count; i++) {
+    let best = Math.random() * maxStart;
+    for (let tries = 0; tries < 15; tries++) {
+      const cand = Math.random() * maxStart;
+      if (starts.every(s => Math.abs(cand - s) >= segLen * 0.85)) {
+        best = cand;
+        break;
+      }
+    }
+    starts.push(best);
+  }
+  starts.sort((a, b) => a - b);
+  return starts.map(s => [s, Math.min(dur, s + segLen)]);
+}
+
+async function clipRandomStart() {
+  if (clipBusy) return;
+  const dur = video.duration;
+  if (!dur || !isFinite(dur)) {
+    showNotification('شغّل الفيديو أولاً');
+    return;
+  }
+  if (dur < 10) {
+    showNotification('مدة الفيديو قصيرة جداً للقص العشوائي');
+    return;
+  }
+  const src = localFile || (/^https?:/.test(video.currentSrc) ? video.currentSrc : null);
+  if (!src) {
+    showNotification('لا يوجد مصدر قابل للقص');
+    return;
+  }
+  const ranges = pickRandomRanges(dur, 5, 60);
+  clipBusy = true;
+  clipFile = null;
+  cutCaption.textContent = 'جارٍ قص 5 لقطات عشوائية (دقيقة)…';
+  const stopGlow = startCutGlow();
+  try {
+    const blob = await mp4CutMulti(src, ranges, (t, p) => {
+      cutCaption.textContent = `${t} ${p}%`;
+    });
+    clipFile = new File([blob], 'random_1m_' + Date.now() + '.mp4', { type: 'video/mp4' });
+    const canShare = navigator.canShare && navigator.canShare({ files: [clipFile] });
+    $('clipSaveTxt').textContent = 'حفظ في الألبوم';
+    clipDownload();
+    clipUI(!!canShare, 'تم قص 5 لقطات عشوائية (دقيقة)');
+  } catch (e) {
+    cbar.classList.remove('open');
+    showNotification(CLIP_ERR[e.message] || 'تعذّر القص العشوائي');
+  } finally {
+    stopGlow();
+    clipBusy = false;
+  }
+}
+
+async function clipStart() {
+  if (clipBusy) return;
+  if (abA == null || abB == null) {
+    showNotification('حدد البداية والنهاية أولاً');
+    return;
+  }
+  const src = localFile || (/^https?:/.test(video.currentSrc) ? video.currentSrc : null);
+  if (!src) {
+    showNotification('لا يوجد مصدر قابل للقص');
+    return;
+  }
+  clipBusy = true;
+  clipFile = null;
+  cutCaption.textContent = 'جارٍ القص…';
+  const stopGlow = startCutGlow();
+  try {
+    const blob = await mp4Cut(src, abA, abB, (t, p) => {
+      cutCaption.textContent = `${t} ${p}%`;
+    });
+    clipFile = new File([blob], 'clip_' + Date.now() + '.mp4', { type: 'video/mp4' });
+    const canShare = navigator.canShare && navigator.canShare({ files: [clipFile] });
+    $('clipSaveTxt').textContent = 'حفظ في الألبوم';
+    clipDownload();
+    clipUI(!!canShare, 'تم القص وحفظ المقطع');
+  } catch (e) {
+    cbar.classList.remove('open');
+    showNotification(CLIP_ERR[e.message] || 'تعذّر القص');
+  } finally {
+    stopGlow();
+    clipBusy = false;
+  }
+}
+
+async function clipShare() {
+  const f = clipFile;
+  if (!f) return;
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      await navigator.share({ files: [f], title: 'مقطع' });
+    } else {
+      clipDownload();
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') clipDownload();
+  }
+}
+
+function clipDownload() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(clipFile);
+  a.download = clipFile.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+</script>
+</body>
+</html>
+
