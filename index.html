@@ -93,14 +93,336 @@ button{border:0;padding:0;background:none;cursor:pointer}
 
 /* الشريط العلوي */
 .topbar{
-  display:flex;
-  flex-wrap:wrap;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
   align-items:center;
-  gap:10px;
+  gap:8px;
   background:rgba(19,22,32,.92);
   border:1px solid var(--line);
-  border-radius:22px;
+  border-radius:20px;
+  padding:8px 10px;
+  width:100%;
+  max-width:960px;
+  margin:0 auto;
+}
+.url-input{
+  width:100%;
+  min-width:0;
+  height:44px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:0 12px;
+  font-size:15px;
+  outline:none;
+}
+.url-input::placeholder{color:var(--muted)}
+.btn-sec{
+  height:44px;
+  padding:0 14px;
+  border-radius:12px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  font-size:14px;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  white-space:nowrap;
+  max-width:100%;
+}
+.btn-sec:active{transform:scale(.97)}
+.btn-pri{
+  height:44px;
+  padding:0 16px;
+  border-radius:12px;
+  background:var(--acc);
+  color:var(--acc-txt);
+  font-size:15px;
+  font-weight:800;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  white-space:nowrap;
+  max-width:100%;
+}
+.btn-pri:active{transform:scale(.97)}
+
+/* شريط التحديد والقص السفلي */
+.bottom{
+  width:100%;
+  max-width:960px;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* شريط تحديد A-B وقص وحفظ */
+.abbar{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:8px;
   padding:10px 12px;
+  border-radius:20px;
+  background:rgba(19,22,32,.96);
+  border:1px solid var(--line);
+  width:100%;
+}
+.abbar.open{display:flex}
+.ab-btn{
+  flex:1 1 auto;
+  min-width:110px;
+  height:44px;
+  padding:0 14px;
+  border-radius:13px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  font-size:14px;
+  font-weight:800;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.ab-btn b{
+  font-family:monospace;
+  font-size:14px;
+  direction:ltr;
+  color:#e2e8f0;
+}
+.cut-btn{
+  flex:1 1 auto;
+  min-width:120px;
+  height:44px;
+  padding:0 16px;
+  border-radius:13px;
+  background:#ffffff;
+  color:#090a0f;
+  font-size:15px;
+  font-weight:800;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.cut-btn:active{transform:scale(.97)}
+.x-btn{
+  width:44px;
+  height:44px;
+  flex:none;
+  border-radius:13px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  display:grid;
+  place-items:center;
+}
+.cmsg{
+  flex:1 1 100%;
+  min-height:42px;
+  padding:8px 14px;
+  border-radius:13px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  font-size:14px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+/* قائمة اللقطات العشوائية الخمس */
+.rand-list{
+  width:100%;
+  max-height:34dvh;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding-top:4px;
+}
+.rand-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:14px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.rand-info{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+.rand-info b{font-size:15px;font-weight:800}
+.rand-info span{font-size:12.5px;color:var(--muted);direction:ltr;text-align:right}
+.rand-acts{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-right:auto;
+}
+.rand-acts button{
+  height:38px;
+  padding:0 12px;
+  border-radius:11px;
+  font-size:13px;
+  font-weight:800;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+}
+.rand-acts .r-dl{background:var(--panel);border:1px solid var(--line);color:var(--txt)}
+.rand-acts .r-sh{background:#ffffff;color:#090a0f}
+
+/* لوحة التحكم السفلية */
+.dock{
+  background:rgba(19,22,32,.94);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:10px 14px 12px;
+  width:100%;
+}
+.times{
+  display:flex;
+  justify-content:space-between;
+  direction:ltr;
+  font-size:14px;
+  font-weight:700;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+  margin-bottom:2px;
+}
+.seek-container{
+  position:relative;
+  height:36px;
+  display:flex;
+  align-items:center;
+  direction:ltr;
+  cursor:pointer;
+  touch-action:none;
+}
+.seek-bar{
+  position:relative;
+  width:100%;
+  height:7px;
+  border-radius:99px;
+  background:rgba(255,255,255,.16);
+}
+#progFill{
+  position:absolute;
+  left:0;
+  top:0;
+  width:0;
+  height:100%;
+  border-radius:99px;
+  background:#ffffff;
+}
+#progFill::after{
+  content:"";
+  position:absolute;
+  right:-10px;
+  top:50%;
+  width:20px;
+  height:20px;
+  margin-top:-10px;
+  border-radius:50%;
+  background:#ffffff;
+  box-shadow:0 2px 8px rgba(0,0,0,.6);
+}
+#abSeg{
+  position:absolute;
+  top:-4px;
+  height:15px;
+  border-radius:6px;
+  background:rgba(255,255,255,.28);
+  border-left:3px solid #ffffff;
+  border-right:3px solid #ffffff;
+  display:none;
+  pointer-events:none;
+}
+
+.ctrl-row{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:6px;
+}
+.grp-play{
+  direction:ltr;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+}
+.grp-actions{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+  width:100%;
+}
+.grp-actions .btn-sec,
+.grp-actions .btn-pri{
+  width:100%;
+  padding:0 6px;
+  font-size:13.5px;
+  height:42px;
+}
+.grp-actions .ic{width:17px;height:17px}
+.ctrl-btn{
+  width:44px;
+  height:44px;
+  border-radius:14px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  display:grid;
+  place-items:center;
+}
+.ctrl-btn:active{transform:scale(.95)}
+.play-main{
+  width:52px;
+  height:52px;
+  border-radius:16px;
+  background:#ffffff;
+  color:#090a0f;
+  display:grid;
+  place-items:center;
+}
+.play-main .ic{width:24px;height:24px}
+
+@media (min-width:720px){
+  .ctrl-row{
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .grp-actions{
+    width:auto;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .grp-actions .btn-sec,
+  .grp-actions .btn-pri{
+    width:auto;
+    padding:0 14px;
+    font-size:14.5px;
+    height:46px;
+  }
+}
+@media (max-width:380px){
+  .topbar{padding:6px 8px;gap:6px}
+  .btn-sec,.btn-pri,.url-input{height:40px;font-size:13px;padding:0 10px}
+  .grp-actions{grid-template-columns:repeat(2,1fr)}
 }
 .url-input{
   flex:1;
@@ -459,12 +781,8 @@ button{border:0;padding:0;background:none;cursor:pointer}
         <svg class="ic"><use href="#i-up"/></svg>
         <span>ملف</span>
       </label>
-      <input type="text" id="videoUrl" class="url-input" placeholder="الصق رابط الفيديو هنا..." autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+      <input type="text" id="videoUrl" class="url-input" placeholder="الصق رابط الفيديو..." autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
       <button class="btn-pri" onclick="updateSource()">تشغيل</button>
-      <button class="btn-sec" id="abToggle" onclick="abToggle()" title="تحديد وقص مقطع">
-        <svg class="ic"><use href="#i-ab"/></svg>
-        <span>تحديد المقطع</span>
-      </button>
     </div>
 
     <div class="bottom">
@@ -482,6 +800,7 @@ button{border:0;padding:0;background:none;cursor:pointer}
 
       <div class="abbar" id="clipBar">
         <span id="clipMsg" class="cmsg"></span>
+        <div id="randomList" class="rand-list hidden"></div>
         <button id="clipSave" class="cut-btn hidden" onclick="clipShare()">
           <span id="clipSaveTxt">حفظ في الألبوم</span>
         </button>
@@ -502,7 +821,7 @@ button{border:0;padding:0;background:none;cursor:pointer}
           </div>
         </div>
         <div class="ctrl-row">
-          <div class="grp">
+          <div class="grp-play">
             <button class="ctrl-btn" onclick="skip(-10)" title="رجوع 10 ثوانٍ">
               <svg class="ic"><use href="#i-ccw"/></svg>
             </button>
@@ -513,9 +832,9 @@ button{border:0;padding:0;background:none;cursor:pointer}
               <svg class="ic"><use href="#i-cw"/></svg>
             </button>
           </div>
-          <div class="grp">
-            <button class="btn-sec" onclick="abSet('a')">تحديد البداية</button>
-            <button class="btn-sec" onclick="abSet('b')">تحديد النهاية</button>
+          <div class="grp-actions">
+            <button class="btn-sec" onclick="abSet('a')">البداية</button>
+            <button class="btn-sec" onclick="abSet('b')">النهاية</button>
             <button class="btn-sec" onclick="clipRandomStart()" title="قص 5 لقطات عشوائية بمجموع دقيقة">
               <svg class="ic"><use href="#i-cut"/></svg>
               <span>عشوائي 1د</span>
@@ -1278,7 +1597,8 @@ const mp4CutMulti = (() => {
 })();
 
 let clipFile = null;
-const cbar = $('clipBar'), cmsg = $('clipMsg'), cSave = $('clipSave');
+let randomFiles = [];
+const cbar = $('clipBar'), cmsg = $('clipMsg'), cSave = $('clipSave'), rList = $('randomList');
 const CLIP_ERR = {
   frag: 'هذا الملف مجزّأ وغير مدعوم للقص',
   nomoov: 'تعذّر قراءة الملف — القص يدعم MP4 و MOV فقط',
@@ -1287,15 +1607,19 @@ const CLIP_ERR = {
   empty: 'المقطع المحدد فارغ'
 };
 
-function clipUI(done, txt) {
+function clipUI(done, txt, isRandom = false) {
   cbar.classList.add('open');
   $('abBar').classList.remove('open');
   cmsg.textContent = txt;
-  cSave.classList.toggle('hidden', !done);
+  rList.classList.toggle('hidden', !isRandom);
+  cSave.classList.toggle('hidden', isRandom || !done);
 }
 
 function clipClose() {
   cbar.classList.remove('open');
+  rList.classList.add('hidden');
+  rList.innerHTML = '';
+  randomFiles = [];
   clipBusy = false;
 }
 
@@ -1306,7 +1630,7 @@ function pickRandomRanges(dur, count = 5, totalSec = 60) {
   const starts = [];
   for (let i = 0; i < count; i++) {
     let best = Math.random() * maxStart;
-    for (let tries = 0; tries < 15; tries++) {
+    for (let tries = 0; tries < 20; tries++) {
       const cand = Math.random() * maxStart;
       if (starts.every(s => Math.abs(cand - s) >= segLen * 0.85)) {
         best = cand;
@@ -1317,6 +1641,55 @@ function pickRandomRanges(dur, count = 5, totalSec = 60) {
   }
   starts.sort((a, b) => a - b);
   return starts.map(s => [s, Math.min(dur, s + segLen)]);
+}
+
+function downloadFileObj(f) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(f);
+  a.download = f.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+async function shareFileObj(f) {
+  if (!f) return;
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      await navigator.share({ files: [f], title: f.name });
+    } else {
+      downloadFileObj(f);
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') downloadFileObj(f);
+  }
+}
+
+function renderRandomList() {
+  const canShare = !!(navigator.canShare && randomFiles[0] && navigator.canShare({ files: [randomFiles[0].file] }));
+  rList.innerHTML = randomFiles.map((item, idx) => `
+    <div class="rand-item">
+      <div class="rand-info">
+        <b>لقطة ${idx + 1} (${Math.round(item.end - item.start)}ث)</b>
+        <span>${formatTime(item.start)} → ${formatTime(item.end)}</span>
+      </div>
+      <div class="rand-acts">
+        <button class="r-dl" onclick="downloadRandomItem(${idx})">تنزيل</button>
+        ${canShare ? `<button class="r-sh" onclick="shareRandomItem(${idx})">حفظ بالألبوم</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function downloadRandomItem(idx) {
+  const item = randomFiles[idx];
+  if (item) downloadFileObj(item.file);
+}
+
+function shareRandomItem(idx) {
+  const item = randomFiles[idx];
+  if (item) shareFileObj(item.file);
 }
 
 async function clipRandomStart() {
@@ -1338,17 +1711,21 @@ async function clipRandomStart() {
   const ranges = pickRandomRanges(dur, 5, 60);
   clipBusy = true;
   clipFile = null;
-  cutCaption.textContent = 'جارٍ قص 5 لقطات عشوائية (دقيقة)…';
+  randomFiles = [];
+  cutCaption.textContent = 'جارٍ تجهيز 5 لقطات عشوائية…';
   const stopGlow = startCutGlow();
   try {
-    const blob = await mp4CutMulti(src, ranges, (t, p) => {
-      cutCaption.textContent = `${t} ${p}%`;
-    });
-    clipFile = new File([blob], 'random_1m_' + Date.now() + '.mp4', { type: 'video/mp4' });
-    const canShare = navigator.canShare && navigator.canShare({ files: [clipFile] });
-    $('clipSaveTxt').textContent = 'حفظ في الألبوم';
-    clipDownload();
-    clipUI(!!canShare, 'تم قص 5 لقطات عشوائية (دقيقة)');
+    const stamp = Date.now();
+    for (let i = 0; i < ranges.length; i++) {
+      const [s, e] = ranges[i];
+      const blob = await mp4Cut(src, s, e, (t, p) => {
+        cutCaption.textContent = `لقطة ${i + 1}/5: ${t} ${p}%`;
+      });
+      const file = new File([blob], `random_${i + 1}_${stamp}.mp4`, { type: 'video/mp4' });
+      randomFiles.push({ file, start: s, end: e });
+    }
+    renderRandomList();
+    clipUI(true, 'تم قص 5 لقطات عشوائية — اختر للحفظ في الألبوم أو التنزيل:', true);
   } catch (e) {
     cbar.classList.remove('open');
     showNotification(CLIP_ERR[e.message] || 'تعذّر القص العشوائي');
@@ -1371,6 +1748,7 @@ async function clipStart() {
   }
   clipBusy = true;
   clipFile = null;
+  randomFiles = [];
   cutCaption.textContent = 'جارٍ القص…';
   const stopGlow = startCutGlow();
   try {
@@ -1381,7 +1759,7 @@ async function clipStart() {
     const canShare = navigator.canShare && navigator.canShare({ files: [clipFile] });
     $('clipSaveTxt').textContent = 'حفظ في الألبوم';
     clipDownload();
-    clipUI(!!canShare, 'تم القص وحفظ المقطع');
+    clipUI(!!canShare, 'تم القص وحفظ المقطع', false);
   } catch (e) {
     cbar.classList.remove('open');
     showNotification(CLIP_ERR[e.message] || 'تعذّر القص');
@@ -1392,29 +1770,12 @@ async function clipStart() {
 }
 
 async function clipShare() {
-  const f = clipFile;
-  if (!f) return;
-  try {
-    if (navigator.canShare && navigator.canShare({ files: [f] })) {
-      await navigator.share({ files: [f], title: 'مقطع' });
-    } else {
-      clipDownload();
-    }
-  } catch (e) {
-    if (e.name !== 'AbortError') clipDownload();
-  }
+  await shareFileObj(clipFile);
 }
 
 function clipDownload() {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(clipFile);
-  a.download = clipFile.name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  if (clipFile) downloadFileObj(clipFile);
 }
 </script>
 </body>
 </html>
-
